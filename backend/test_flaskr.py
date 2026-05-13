@@ -10,13 +10,22 @@ class TriviaTestCase(unittest.TestCase):
 
     def setUp(self):
         """Define test variables and initialize app."""
-        self.database_name = os.environ.get("TRIVIA_TEST_DB_NAME", "trivia_test")
+        self.database_name = os.environ.get(
+            "TRIVIA_TEST_DB_NAME",
+            "trivia_test"
+        )
         self.database_user = os.environ.get("TRIVIA_DB_USER", "postgres")
-        self.database_password = os.environ.get("TRIVIA_DB_PASSWORD", "password")
+        self.database_password = os.environ.get(
+            "TRIVIA_DB_PASSWORD",
+            "password"
+        )
         self.database_host = os.environ.get("TRIVIA_DB_HOST", "localhost:5432")
         self.database_path = os.environ.get(
             "TEST_DATABASE_URL",
-            f"postgresql://{self.database_user}:{self.database_password}@{self.database_host}/{self.database_name}"
+            (
+                f"postgresql://{self.database_user}:{self.database_password}"
+                f"@{self.database_host}/{self.database_name}"
+            )
         )
 
         # Create app with the test configuration
@@ -38,7 +47,9 @@ class TriviaTestCase(unittest.TestCase):
             db.session.add_all(self.categories)
             db.session.commit()
             self.category_ids = [category.id for category in self.categories]
-            self.category_types = [category.type for category in self.categories]
+            self.category_types = [
+                category.type for category in self.categories
+            ]
 
             self.questions = []
             for i in range(12):
@@ -64,11 +75,6 @@ class TriviaTestCase(unittest.TestCase):
                 Question.query.delete()
                 Category.query.delete()
                 db.session.commit()
-
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
 
     def test_get_categories_success(self):
         response = self.client.get("/categories")
@@ -136,6 +142,71 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertFalse(data["success"])
 
+    def test_update_question_success(self):
+        with self.app.app_context():
+            question = Question(
+                question="Original question?",
+                answer="Original answer",
+                category=self.category_ids[0],
+                difficulty=1
+            )
+            question.insert()
+            question_id = question.id
+
+        payload = {
+            "question": "Updated question?",
+            "answer": "Updated answer",
+            "category": self.category_ids[1],
+            "difficulty": 4
+        }
+        response = self.client.put(f"/questions/{question_id}", json=payload)
+        data = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["updated"], question_id)
+        self.assertEqual(data["question"]["question"], payload["question"])
+        self.assertEqual(data["question"]["answer"], payload["answer"])
+        self.assertEqual(
+            data["question"]["category"],
+            str(payload["category"])
+        )
+        self.assertEqual(data["question"]["difficulty"], payload["difficulty"])
+
+        with self.app.app_context():
+            updated = db.session.get(Question, question_id)
+            self.assertEqual(updated.question, payload["question"])
+            self.assertEqual(updated.answer, payload["answer"])
+            self.assertEqual(updated.category, payload["category"])
+            self.assertEqual(updated.difficulty, payload["difficulty"])
+
+    def test_update_question_not_found(self):
+        response = self.client.put(
+            "/questions/99999",
+            json={"question": "Updated question?"}
+        )
+        data = response.get_json()
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(data["success"])
+
+    def test_update_question_bad_request(self):
+        with self.app.app_context():
+            question = Question(
+                question="Bad request target?",
+                answer="Existing answer",
+                category=self.category_ids[0],
+                difficulty=1
+            )
+            question.insert()
+            question_id = question.id
+
+        response = self.client.put(f"/questions/{question_id}", json={})
+        data = response.get_json()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(data["success"])
+
     def test_create_question_success(self):
         payload = {
             "question": "What is the capital of France?",
@@ -199,7 +270,10 @@ class TriviaTestCase(unittest.TestCase):
         category_id = self.category_ids[0]
         payload = {
             "previous_questions": [],
-            "quiz_category": {"id": category_id, "type": self.category_types[0]}
+            "quiz_category": {
+                "id": category_id,
+                "type": self.category_types[0]
+            }
         }
         response = self.client.post("/quizzes", json=payload)
         data = response.get_json()

@@ -6,6 +6,7 @@ from models import setup_db, Question, Category, db
 
 QUESTIONS_PER_PAGE = 10
 
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -29,7 +30,7 @@ def create_app(test_config=None):
         )
         response.headers.add(
             "Access-Control-Allow-Methods",
-            "GET,POST,DELETE,OPTIONS"
+            "GET,POST,PUT,DELETE,OPTIONS"
         )
         return response
 
@@ -79,6 +80,59 @@ def create_app(test_config=None):
             "deleted": question_id
         })
 
+    @app.route("/questions/<int:question_id>", methods=["PUT"])
+    def update_question(question_id):
+        question = db.session.get(Question, question_id)
+        if question is None:
+            abort(404)
+
+        data = request.get_json()
+        if data is None:
+            abort(400)
+
+        allowed_fields = {"question", "answer", "category", "difficulty"}
+        if not any(field in data for field in allowed_fields):
+            abort(400)
+
+        updates = {}
+        if "question" in data:
+            if not data["question"]:
+                abort(400)
+            updates["question"] = data["question"]
+
+        if "answer" in data:
+            if not data["answer"]:
+                abort(400)
+            updates["answer"] = data["answer"]
+
+        try:
+            if "category" in data:
+                if not data["category"]:
+                    abort(400)
+                updates["category"] = int(data["category"])
+
+            if "difficulty" in data:
+                if not data["difficulty"]:
+                    abort(400)
+                updates["difficulty"] = int(data["difficulty"])
+        except ValueError:
+            abort(422)
+
+        for field, value in updates.items():
+            setattr(question, field, value)
+
+        try:
+            question.update()
+        except Exception:
+            db.session.rollback()
+            abort(422)
+
+        return jsonify({
+            "success": True,
+            "updated": question_id,
+            "question": question.format()
+        })
+
     @app.route("/questions", methods=["POST"])
     def create_or_search_questions():
         data = request.get_json()
@@ -106,7 +160,12 @@ def create_app(test_config=None):
         category = data.get("category")
         difficulty = data.get("difficulty")
 
-        if not question_text or not answer_text or not category or not difficulty:
+        if (
+            not question_text
+            or not answer_text
+            or not category
+            or not difficulty
+        ):
             abort(400)
 
         created_id = None
@@ -130,7 +189,10 @@ def create_app(test_config=None):
             "created": created_id
         })
 
-    @app.route("/categories/<int:category_id>/questions", methods=["GET", "POST"])
+    @app.route(
+        "/categories/<int:category_id>/questions",
+        methods=["GET", "POST"]
+    )
     def get_questions_by_category(category_id):
         category = db.session.get(Category, category_id)
         if category is None:
@@ -162,7 +224,11 @@ def create_app(test_config=None):
         if not isinstance(previous_questions, list):
             abort(400)
 
-        category_id = quiz_category.get("id") if isinstance(quiz_category, dict) else None
+        category_id = (
+            quiz_category.get("id")
+            if isinstance(quiz_category, dict)
+            else None
+        )
         if category_id in (0, None, "0"):
             query = Question.query
         else:

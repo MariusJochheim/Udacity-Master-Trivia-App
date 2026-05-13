@@ -167,6 +167,33 @@ The Trivia API currently exposes the following endpoints. The backend listens on
 }
 ```
 
+### `PUT /questions/<question_id>`
+
+- Description: Updates an existing question by its ID.
+- Request Arguments: None in query string.
+- URL Parameters:
+  - `question_id` (integer) - ID of the question to update.
+- Request Body (JSON): Include one or more of the following fields:
+  - `question` (string) - updated question text.
+  - `answer` (string) - updated answer text.
+  - `category` (integer or string) - updated category ID.
+  - `difficulty` (integer) - updated difficulty rating.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "updated": 5,
+  "question": {
+    "id": 5,
+    "question": "Updated question text?",
+    "answer": "Updated answer text",
+    "category": "1",
+    "difficulty": 3
+  }
+}
+```
+
 ### `POST /questions` (create a question)
 
 - Description: Creates a new question.
