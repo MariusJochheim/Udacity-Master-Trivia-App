@@ -1,10 +1,22 @@
+import os
+from pathlib import Path
 from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
-database_name = 'trivia'
-database_user = 'postgres'
-database_password = 'password'
-database_host = 'localhost:5432'
-database_path = f'postgresql://{database_user}:{database_password}@{database_host}/{database_name}'
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / '.env')
+
+database_name = os.environ.get('TRIVIA_DB_NAME', 'trivia')
+database_user = os.environ.get('TRIVIA_DB_USER', 'postgres')
+database_password = os.environ.get('TRIVIA_DB_PASSWORD', 'password')
+database_host = os.environ.get('TRIVIA_DB_HOST', 'localhost:5432')
+database_path = os.environ.get(
+    'DATABASE_URL',
+    f'postgresql://{database_user}:{database_password}@{database_host}/{database_name}'
+)
+
+if database_path.startswith('postgres://'):
+    database_path = database_path.replace('postgres://', 'postgresql://', 1)
 
 db = SQLAlchemy()
 
@@ -26,14 +38,14 @@ class Question(db.Model):
     id = Column(Integer, primary_key=True)
     question = Column(String, nullable=False)
     answer = Column(String, nullable=False)
-    category = Column(String, nullable=False)
+    category = Column(Integer, nullable=False)
     difficulty = Column(Integer, nullable=False)
 
     def __init__(self, question, answer, category, difficulty):
         self.question = question
         self.answer = answer
-        self.category = category
-        self.difficulty = difficulty
+        self.category = int(category)
+        self.difficulty = int(difficulty)
 
     def insert(self):
         db.session.add(self)
@@ -51,7 +63,7 @@ class Question(db.Model):
             'id': self.id,
             'question': self.question,
             'answer': self.answer,
-            'category': self.category,
+            'category': str(self.category),
             'difficulty': self.difficulty
         }
 

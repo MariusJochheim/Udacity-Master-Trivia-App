@@ -30,6 +30,31 @@ With Postgres running, create a `trivia` database:
 createdb trivia
 ```
 
+If your local Postgres user or password differs from the default, put them in a `.env` file in the `backend` folder and the app will load them automatically.
+
+Create a `.env` file with values like:
+
+```bash
+TRIVIA_DB_NAME=trivia
+TRIVIA_TEST_DB_NAME=trivia_test
+TRIVIA_DB_USER=postgres
+TRIVIA_DB_PASSWORD=your_password
+TRIVIA_DB_HOST=localhost:5432
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/trivia
+TEST_DATABASE_URL=postgresql://postgres:your_password@localhost:5432/trivia_test
+```
+
+Or export them in your shell if you prefer:
+
+```bash
+export TRIVIA_DB_USER=postgres
+export TRIVIA_DB_PASSWORD=your_password
+export TRIVIA_DB_HOST=localhost:5432
+export TRIVIA_TEST_DB_NAME=trivia_test
+export DATABASE_URL=postgresql://postgres:your_password@localhost:5432/trivia
+export TEST_DATABASE_URL=postgresql://postgres:your_password@localhost:5432/trivia_test
+```
+
 Populate the database using the `trivia.psql` file provided. From the `backend` folder in terminal run:
 
 ```bash
