@@ -96,22 +96,214 @@ One note before you delve into your tasks: for each endpoint, you are expected t
 
 You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
 
-### Documentation Example
+## API Endpoint Documentation
 
-`GET '/api/v1.0/categories'`
+The Trivia API currently exposes the following endpoints. The backend listens on the Flask server base URL, for example `http://localhost:5000`.
 
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
+### `GET /categories`
+
+- Description: Fetches all trivia categories.
 - Request Arguments: None
-- Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs.
+- Response Body:
 
 ```json
 {
-  "1": "Science",
-  "2": "Art",
-  "3": "Geography",
-  "4": "History",
-  "5": "Entertainment",
-  "6": "Sports"
+  "success": true,
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  }
+}
+```
+
+### `GET /questions`
+
+- Description: Fetches a paginated list of questions.
+- Request Arguments:
+  - `page` (optional, integer) - page number for pagination, defaults to 1.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the capital of France?",
+      "answer": "Paris",
+      "category": "3",
+      "difficulty": 2
+    }
+  ],
+  "total_questions": 100,
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "current_category": null
+}
+```
+
+### `DELETE /questions/<question_id>`
+
+- Description: Deletes a specific question by its ID.
+- Request Arguments: None in query string.
+- URL Parameters:
+  - `question_id` (integer) - ID of the question to delete.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "deleted": 5
+}
+```
+
+### `POST /questions` (create a question)
+
+- Description: Creates a new question.
+- Request Body (JSON):
+  - `question` (string) - text of the question.
+  - `answer` (string) - answer text.
+  - `category` (integer or string) - category ID.
+  - `difficulty` (integer) - difficulty rating.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "created": 15
+}
+```
+
+### `POST /questions` (search questions)
+
+- Description: Searches questions by substring match on the question text.
+- Request Body (JSON):
+  - `searchTerm` (string) - text to search for in questions.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 3,
+      "question": "Who wrote Hamlet?",
+      "answer": "William Shakespeare",
+      "category": "2",
+      "difficulty": 3
+    }
+  ],
+  "total_questions": 1,
+  "current_category": null
+}
+```
+
+### `GET /categories/<category_id>/questions`
+
+- Description: Fetches questions within a specific category.
+- Request Arguments: None in query string.
+- URL Parameters:
+  - `category_id` (integer) - ID of the requested category.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 7,
+      "question": "What is the largest ocean?",
+      "answer": "Pacific Ocean",
+      "category": "3",
+      "difficulty": 2
+    }
+  ],
+  "total_questions": 15,
+  "current_category": "Geography"
+}
+```
+
+### `POST /quizzes`
+
+- Description: Returns a random quiz question that has not been asked previously.
+- Request Body (JSON):
+  - `previous_questions` (array of integers) - list of question IDs already asked.
+  - `quiz_category` (object) - category object with at least an `id` field. Use `0` or `{ "id": 0 }` for all categories.
+- Response Body:
+
+```json
+{
+  "success": true,
+  "question": {
+    "id": 10,
+    "question": "What planet is known as the Red Planet?",
+    "answer": "Mars",
+    "category": "1",
+    "difficulty": 2
+  }
+}
+```
+
+- If no questions remain for the chosen category, the response is:
+
+```json
+{
+  "success": true,
+  "question": null
+}
+```
+
+### Error Responses
+
+The API uses JSON error responses for invalid requests.
+
+- `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": 400,
+  "message": "bad request"
+}
+```
+
+- `404 Not Found`
+
+```json
+{
+  "success": false,
+  "error": 404,
+  "message": "resource not found"
+}
+```
+
+- `422 Unprocessable Entity`
+
+```json
+{
+  "success": false,
+  "error": 422,
+  "message": "unprocessable"
+}
+```
+
+- `500 Internal Server Error`
+
+```json
+{
+  "success": false,
+  "error": 500,
+  "message": "internal server error"
 }
 ```
 
